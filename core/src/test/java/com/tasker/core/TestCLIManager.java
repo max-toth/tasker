@@ -20,7 +20,7 @@ public class TestCLIManager {
     }
     @Test
     public void testCreateTaskOptionsList() {
-        String[] args = new String[] {"-l"};
+        String[] args = new String[] {"-l", "3"};
         new CommandLine().handle(args);
     }
 
@@ -61,7 +61,6 @@ public class TestCLIManager {
     public void testCreateTaskOptions3() {
         String[] args = new String[] {"-t", "Maersk", "-c", "Just call me angel "};
         CommandLine manager = new CommandLine();
-        manager.list();
         manager.handle(args);
     }
 }

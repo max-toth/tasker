@@ -14,6 +14,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static com.tasker.core.cli.ICommandLine.*;
@@ -60,7 +61,11 @@ public class CommandLine {
                         .build()
         );
         options.addOption("s", sync_opt, false, "Sync all tasks with storage");
-        options.addOption("l", list_opt, false, "List all tasks in storage");
+        options.addOption(Option.builder("l").longOpt(list_opt)
+                .hasArg().argName("SIZE").optionalArg(true)
+                .valueSeparator(' ')
+                .type(String.class).desc("List all tasks in storage")
+                .build());
         options.addOption("h", help_opt, false, "Tasker help");
 
         init();
@@ -83,7 +88,12 @@ public class CommandLine {
                 System.exit(0);
             }
             if (line.hasOption(list_opt)) {
-                list();
+                int SIZE = 0;
+                String optionValue = line.getOptionValue(list_opt);
+                if (optionValue != null) {
+                    SIZE = Integer.parseInt(optionValue);
+                }
+                list(SIZE);
                 System.exit(0);
             }
             if (line.hasOption(help_opt)) {
@@ -109,7 +119,7 @@ public class CommandLine {
         System.exit(0);
     }
 
-    private void syncDB() {
+    public void syncDB() {
         DatabaseManager databaseManager = new DatabaseManager();
         databaseManager.sync();
     }
@@ -127,9 +137,17 @@ public class CommandLine {
         }
     }
 
-    public void list() {
+    public void list(int size) {
         AnsiConsole.systemInstall();
-        for (Task task: LocalStorage.getTaskList()) {
+        List<Task> taskList = LocalStorage.getTaskList();
+        int listSize = taskList.size();
+        int n = 0;
+        if ((size > 0) && (size < listSize)) {
+            n = listSize - size;
+            System.out.println("Output " + size + " of " + listSize + " tasks.");
+        }
+        for (int i = n; i < listSize; i++) {
+            Task task = taskList.get(i);
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
             String start = simpleDateFormat.format(task.getDate());
 
@@ -216,7 +234,7 @@ public class CommandLine {
     private void resolve(org.apache.commons.cli.CommandLine line) {
         String taskID = line.getOptionValue(resolve_opt);
         if (StringUtils.isNotEmpty(taskID)) {
-            for (Task t: LocalStorage.getTaskList()) {
+            for (Task t : LocalStorage.getTaskList()) {
                 if (t.getNumber().equals(taskID)) {
                     t.resolve();
                 }
