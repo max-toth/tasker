@@ -233,12 +233,19 @@ public class CommandLine {
 
     private void resolve(org.apache.commons.cli.CommandLine line) {
         String taskID = line.getOptionValue(resolve_opt);
+        boolean resolved = false;
         if (StringUtils.isNotEmpty(taskID)) {
             for (Task t : LocalStorage.getTaskList()) {
                 if (t.getNumber().equals(taskID)) {
                     t.resolve();
+                    System.out.println("++++++ task " + t.getNumber() + " resolved");
+                    resolved = true;
+                    break;
                 }
             }
+        }
+        if (!resolved) {
+            System.out.println("Task wth number [" + taskID + "] not found.");
         }
 
         sync();
