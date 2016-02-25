@@ -245,7 +245,7 @@ public class CommandLine {
             }
         }
         if (!resolved) {
-            System.out.println("Task wth number [" + taskID + "] not found.");
+            System.out.println("Task with number [" + taskID + "] not found.");
         }
 
         sync();
