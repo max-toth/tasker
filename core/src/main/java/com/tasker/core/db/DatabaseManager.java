@@ -42,7 +42,8 @@ public class DatabaseManager {
                     inserted++;
                 } else if (!fromDb.getBoolean("status").equals(document.getBoolean("status"))) {
                     fromDb.put("status", t.getStatus());
-                    taskCollection.updateOne(Filters.eq("number", t.getNumber()), new Document("$set", new Document("status", t.getStatus())));
+                    taskCollection.updateOne(Filters.eq("number", t.getNumber()),
+                            new Document("$set", new Document("status", t.getStatus()).append("end", t.getEnd())));
                     updated++;
                 }
             }
