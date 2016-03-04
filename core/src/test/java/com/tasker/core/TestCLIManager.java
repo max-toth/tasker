@@ -37,6 +37,12 @@ public class TestCLIManager {
     }
 
     @Test
+    public void testCreateTaskOptionsFilter() {
+        String[] args = new String[] {"-f", "Maersk","10"};
+        new CommandLine().handle(args);
+    }
+
+    @Test
     public void testCreateTaskOptionsExportJSON() {
         String[] args = new String[] {"-e", "JSON"};
         new CommandLine().handle(args);

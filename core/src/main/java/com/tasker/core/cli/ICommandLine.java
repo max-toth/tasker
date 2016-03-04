@@ -15,6 +15,9 @@ public interface ICommandLine {
     String sync_opt = "sync";
     String list_opt = "list";
     String help_opt = "help";
+    String export_opt = "export";
+    String filter_opt = "filter";
+
 
     String homedrive = System.getenv().get("HOMEDRIVE");
     String homepath = System.getenv().get("HOMEPATH");

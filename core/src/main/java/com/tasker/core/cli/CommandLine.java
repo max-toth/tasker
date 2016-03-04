@@ -8,6 +8,7 @@ import com.tasker.core.db.DatabaseManager;
 import com.tasker.core.utils.FileUtil;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
+import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
 import java.io.File;
@@ -26,8 +27,11 @@ import static org.fusesource.jansi.Ansi.*;
  */
 public class CommandLine {
 
-    public static final String export_opt = "export";
     private Options options;
+
+    private int SIZE = 0;
+
+    private String filterKeyword;
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private FileUtil fileUtil = new FileUtil();
@@ -51,6 +55,13 @@ public class CommandLine {
                         .hasArg().argName("TASK_ID")
                         .valueSeparator(' ')
                         .type(String.class).desc("Resolve task by ID")
+                        .build()
+        );
+        options.addOption(
+                Option.builder("f").longOpt(filter_opt)
+                        .hasArg().argName("KEYWORD")
+                        .valueSeparator(' ')
+                        .type(String.class).desc("search task by KEYWORD")
                         .build()
         );
         options.addOption(
@@ -88,12 +99,17 @@ public class CommandLine {
                 System.exit(0);
             }
             if (line.hasOption(list_opt)) {
-                int SIZE = 0;
+
                 String optionValue = line.getOptionValue(list_opt);
                 if (optionValue != null) {
-                    SIZE = Integer.parseInt(optionValue);
+                    try {
+                        SIZE = Integer.parseInt(optionValue);
+                    } catch (NumberFormatException e) {
+                        help();
+                        System.exit(0);
+                    }
                 }
-                list(SIZE);
+                list();
                 System.exit(0);
             }
             if (line.hasOption(help_opt)) {
@@ -107,6 +123,10 @@ public class CommandLine {
                 export(line);
                 System.exit(0);
             }
+            if(line.hasOption(filter_opt)) {
+                filter(line);
+                System.exit(0);
+            }
             if (line.getOptions().length == 0) {
                 help();
                 System.exit(0);
@@ -117,6 +137,26 @@ public class CommandLine {
             System.exit(-1);
         }
         System.exit(0);
+    }
+
+    private void filter(org.apache.commons.cli.CommandLine line) {
+        filterKeyword = line.getOptionValue(filter_opt);
+        if (StringUtils.isEmpty(filterKeyword)) {
+            help();
+            System.exit(0);
+        }
+
+        String[] args = line.getArgs();
+        if (args.length > 0) {
+            try {
+                SIZE = Integer.valueOf(args[0]);
+            } catch (NumberFormatException e) {
+                help();
+                System.exit(0);
+            }
+        }
+
+        list();
     }
 
     public void syncDB() {
@@ -137,29 +177,26 @@ public class CommandLine {
         }
     }
 
-    public void list(int size) {
+    public void list() {
         AnsiConsole.systemInstall();
         List<Task> taskList = LocalStorage.getTaskList();
         int listSize = taskList.size();
         int n = 0;
-        if ((size > 0) && (size < listSize)) {
-            n = listSize - size;
-            System.out.println("Output " + size + " of " + listSize + " tasks.");
+        if ((SIZE > 0) && (SIZE < listSize)) {
+            n = listSize - SIZE;
+            System.out.println("Output last" + SIZE + " of " + listSize + " tasks.");
         }
         for (int i = n; i < listSize; i++) {
             Task task = taskList.get(i);
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
-            String start = simpleDateFormat.format(task.getDate());
 
-            String endDate = getEndDate(task);
+            if (StringUtils.isNotEmpty(filterKeyword)) {
+                if (task.getTitle().contains(filterKeyword) || task.getTask().contains(filterKeyword)) {
+                    print(task);
+                }
+            } else {
+                print(task);
+            }
 
-            System.out.println(
-                    ansi().a(task.getNumber()).a("\t")
-                            .fg(task.getStatus() ? Color.RED : Color.GREEN).a(task.getStatus() ? progress_state : complete_state).reset()
-                            .a(date_prefix).a(start)
-                            .a(date_prefix).a(endDate).a("\t")
-                            .a(task.getTitle()).a(".").a(task.getTask())
-            );
         }
         AnsiConsole.systemUninstall();
 //        for (Task task: LocalStorage.getTaskList()) {
@@ -171,6 +208,20 @@ public class CommandLine {
 //                            + "\t" + task.getTitle() + "." + task.getTask()
 //            );
 //        }
+    }
+
+    private void print(Task task) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
+        String start = simpleDateFormat.format(task.getDate());
+        String endDate = getEndDate(task);
+
+        System.out.println(
+                ansi().a(task.getNumber()).a("\t")
+                        .fg(task.getStatus() ? Color.RED : Color.GREEN).a(task.getStatus() ? progress_state : complete_state).reset()
+                        .a(date_prefix).a(start)
+                        .a(date_prefix).a(endDate).a("\t")
+                        .a(task.getTitle()).a(".").a(task.getTask())
+        );
     }
 
     public void init() {
